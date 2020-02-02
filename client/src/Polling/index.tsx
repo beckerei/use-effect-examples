@@ -1,12 +1,11 @@
 import React, { useRef, useState } from 'react';
-import { Subject, merge, BehaviorSubject, empty } from 'rxjs';
+import { Subject, merge, BehaviorSubject } from 'rxjs';
 import {
   debounceTime,
   switchMap,
   first,
   skip,
   takeUntil,
-  map,
   filter,
   tap,
 } from 'rxjs/operators';
@@ -23,32 +22,40 @@ const createStream$ = (
     switchMap(() => fromFetch(apiUrl)),
     tap(response => !response.ok && triger$.next(0)),
     filter(response => response.ok),
-    map(response => response.json()),
   );
 
 export const Polling: React.FC = () => {
   const triger$ = useRef(new BehaviorSubject(0));
   const destroy$ = useRef(new Subject<void>());
+  const [data, setData] = useState();
 
   const [isLoading, setIsLoading] = useState(false);
 
   React.useEffect(() => {
-    setIsLoading(true);
-    createStream$(triger$.current, destroy$.current)
-      .subscribe(body => {
-        console.log('Response: ', body);
-      })
-      .add(() => setIsLoading(false));
+    triger$.current.subscribe(() => setIsLoading(true));
+    destroy$.current.subscribe(() => {
+      setIsLoading(false);
+      setData(undefined);
+    });
+
+    createStream$(triger$.current, destroy$.current).subscribe(
+      async response => {
+        const body = await response.json();
+        setData(body.counter);
+        setIsLoading(false);
+      },
+    );
 
     return () => {
       destroy$.current.next();
       destroy$.current.unsubscribe();
+      triger$.current.unsubscribe();
     };
   }, []);
 
   return (
     <>
-      <div>{isLoading ? 'Polling …' : 'Done'}</div>
+      <div>{isLoading ? 'Polling …' : data}</div>
       <button
         onClick={() => {
           triger$.current.next(0);
@@ -58,7 +65,7 @@ export const Polling: React.FC = () => {
       </button>
       <button
         onClick={() => {
-          triger$.current.complete();
+          destroy$.current.next();
         }}
       >
         Abort
