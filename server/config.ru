@@ -15,11 +15,11 @@ class App < Roda
     r.on 'polling' do
       if counter.to_i < 5
         response.status = 404
+        'Not Found'
       else
         reset_counter
+        { 'counter' => counter }
       end
-
-      { 'counter' => counter }
     end
   end
 
