@@ -1,11 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { Subject, merge, BehaviorSubject } from 'rxjs';
+import { Subject, merge, BehaviorSubject, empty } from 'rxjs';
 import {
   debounceTime,
   switchMap,
   first,
   skip,
   takeUntil,
+  map,
+  filter,
+  tap,
 } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 
@@ -18,6 +21,9 @@ const createStream$ = (
   merge(triger$.pipe(first()), triger$.pipe(skip(1), debounceTime(2000))).pipe(
     takeUntil(destroy$),
     switchMap(() => fromFetch(apiUrl)),
+    tap(response => !response.ok && triger$.next(0)),
+    filter(response => response.ok),
+    map(response => response.json()),
   );
 
 export const Polling: React.FC = () => {
@@ -29,10 +35,8 @@ export const Polling: React.FC = () => {
   React.useEffect(() => {
     setIsLoading(true);
     createStream$(triger$.current, destroy$.current)
-      .subscribe(response => {
-        if (!response.ok) {
-          triger$.current.next(0);
-        }
+      .subscribe(body => {
+        console.log('Response: ', body);
       })
       .add(() => setIsLoading(false));
 
