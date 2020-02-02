@@ -1,10 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Subject, merge, BehaviorSubject } from 'rxjs';
-import { debounceTime, switchMap, first, skip, takeUntil } from 'rxjs/operators';
+import {
+  debounceTime,
+  switchMap,
+  first,
+  skip,
+  takeUntil,
+} from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
 
-const apiUrl =
-  'https://gist.githubusercontent.com/beckerei/9efae61235a5165c9d05992c06dde402/raw/77ccc503fcc48e62d9d6aef6132610746a3b2632/fakeResponse.json';
+const apiUrl = 'http://localhost:8080/polling';
 
 const createStream$ = (
   triger$: BehaviorSubject<number>,
@@ -24,9 +29,8 @@ export const Polling: React.FC = () => {
   React.useEffect(() => {
     setIsLoading(true);
     createStream$(triger$.current, destroy$.current)
-      .subscribe(async response => {
-        const { status } = await response.json();
-        if (status !== 200) {
+      .subscribe(response => {
+        if (!response.ok) {
           triger$.current.next(0);
         }
       })
