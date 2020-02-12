@@ -13,7 +13,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 const apiUrl = 'http://localhost:8080/polling';
 
-const createStream$ = (
+const poll$ = (
   triger$: BehaviorSubject<number>,
   destroy$: Subject<void>,
 ) =>
@@ -38,7 +38,7 @@ export const Polling: React.FC = () => {
       setData(undefined);
     });
 
-    createStream$(triger$.current, destroy$.current).subscribe(
+    poll$(triger$.current, destroy$.current).subscribe(
       async response => {
         const body = await response.json();
         setData(body.counter);
