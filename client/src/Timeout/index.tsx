@@ -10,10 +10,10 @@ export const Timeout: React.FC = () => {
       setSomeState(navigation);
     }, 1000);
 
-    // return () => {
-    //   console.log('useEffect cleanup called with', navigation);
-    //   clearTimeout(timeout);
-    // };
+    return () => {
+      console.log('useEffect cleanup called with', navigation);
+      clearTimeout(timeout);
+    };
   }, [navigation]);
 
   return (
