@@ -10,18 +10,19 @@ import {
   tap,
 } from 'rxjs/operators';
 import { fromFetch } from 'rxjs/fetch';
+export { StateMachine } from './StateMachine';
 
 const apiUrl = 'http://localhost:8080/polling';
 
-const poll$ = (
-  trigger$: BehaviorSubject<number>,
-  destroy$: Subject<void>,
-) =>
-  merge(trigger$.pipe(first()), trigger$.pipe(skip(1), debounceTime(2000))).pipe(
+const poll$ = (trigger$: BehaviorSubject<number>, destroy$: Subject<void>) =>
+  merge(
+    trigger$.pipe(first()),
+    trigger$.pipe(skip(1), debounceTime(2000)),
+  ).pipe(
     takeUntil(destroy$),
     switchMap(() => fromFetch(apiUrl)),
-    tap(response => !response.ok && trigger$.next(0)),
-    filter(response => response.ok),
+    tap((response) => !response.ok && trigger$.next(0)),
+    filter((response) => response.ok),
   );
 
 export const Polling: React.FC = () => {
@@ -38,13 +39,11 @@ export const Polling: React.FC = () => {
       setData(undefined);
     });
 
-    poll$(trigger$.current, destroy$.current).subscribe(
-      async response => {
-        const body = await response.json();
-        setData(body.counter);
-        setIsLoading(false);
-      },
-    );
+    poll$(trigger$.current, destroy$.current).subscribe(async (response) => {
+      const body = await response.json();
+      setData(body.counter);
+      setIsLoading(false);
+    });
 
     return () => {
       destroy$.current.next();
